@@ -1,3 +1,12 @@
 Download raw GEO data, filter data into standard representation, and model GEO objects.
 
 GEO: www.ncbi.nlm.nih.gov/geo
+
+ENVIRONMENT VARIABLES
+=====================
+set like
+$ export VAR=VALUE
+
+ENV: set to SERVER if running in production environment
+CACHE_DIR: complete path to cache directory for downloads
+LOGFILE: complete path to log file if ENV=SERVER

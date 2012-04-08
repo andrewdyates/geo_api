@@ -1,6 +1,7 @@
 #!/usr/bin/python
 import os
 import stderr_logger
+import server_logger
 
 # Set context sensitive logger.
 if 'ENV' in os.environ and os.environ['ENV'] == "SERVER":

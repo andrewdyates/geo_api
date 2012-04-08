@@ -16,11 +16,11 @@ if 'LOGFILE' not in os.environ:
 else:
   log_file = os.environ['LOGFILE']
 
-Log = logging.getLogger(log_file)
+Log = logging.getLogger('log_file')
 Log.setLevel(logging.DEBUG)
 
 # See: http://docs.python.org/library/logging.handlers.html
-fh = logging.FileHandler(LOGFILE)
+fh = logging.FileHandler(log_file)
 fh.setLevel(logging.DEBUG)
 f = logging.Formatter("%(levelname)s %(asctime)s %(module)s.%(funcName)s %(lineno)d %(message)s")
 fh.setFormatter(f)
