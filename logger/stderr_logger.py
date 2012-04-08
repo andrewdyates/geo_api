@@ -9,6 +9,7 @@ For help, see:
 Python v2.7.2 documentation: Python HOWTOs.
 [http://docs.python.org/howto/logging-cookbook.html]
 """
+import os
 import logging
 
 Log = logging.getLogger("stderr_logger")
@@ -24,7 +25,8 @@ Log.addHandler(ch)
 
 # Create file handler which logs even debug messages.
 # Use "debug" for big file dumps
-fh = logging.FileHandler('/Users/qq/python_logger.log')
+home_dir = os.environ["HOME"]
+fh = logging.FileHandler("%s/%s" % (home_dir, 'python_logger.log'))
 fh.setLevel(logging.DEBUG)
 Log.addHandler(fh)
 
