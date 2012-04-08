@@ -22,8 +22,12 @@ import download
 sys.path.append("..")
 from logger import Log
 
-# XXX: SET THIS TO YOUR LOCAL PATH
-CACHE_DIR = "/Users/qq/biostat_data/cache"
+
+# ENVIRONMENT SPECIFIC CACHE_DIR PATH
+if 'CACHE_DIR' in os.environ:
+  CACHE_DIR = os.environ['CACHE_DIR']
+else:
+  raise Exception, "Set environ var CACHE_DIR to cache directory."
 
 def get_cache_name(url):
   """Return cache file name from url."""
