@@ -9,4 +9,5 @@ $ export VAR=VALUE
 
 ENV: set to SERVER if running in production environment
 CACHE_DIR: complete path to cache directory for downloads
+TMP_DIR: complete path to temporary file directory 
 LOGFILE: complete path to log file if ENV=SERVER

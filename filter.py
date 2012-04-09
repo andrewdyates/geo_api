@@ -1,17 +1,42 @@
 #!/usr/bin/python
-import subprocess
-from logger import Log
-import geo
-import sys
-import pylab
+"""Filter cleaned rows of GSE series matrix data.
 
-TMP_DIR = "/Users/qq/biostat_data/cache"
+Environment variables:
+TMP_DIR: path to temporary directory
+"""
+import os
+import pylab
+import random
+import subprocess
+import sys
+import time
+
+import geo
+from logger import Log
 
 class MalformedFilterError(Exception):
   pass
 
 class Filter(object):
   pass
+
+def temp_file_name(name=""):
+  """Return string of a full path to a new temporary file name.
+
+  Args:
+    name: str of name to include in temporary file name.
+  Returns:
+    str of full path to new file name in TMP_DIR
+  """
+  t = int(time.time())
+  x = random.randint(0, 1000000)
+  filename = "tmp.%s.%d.%d" % (name, t, x)
+  if 'TMP_DIR' in os.environ:
+    path = os.environ['TMP_DIR']
+  else:
+    # The temporary, working directory should also be environment sensitive.
+    raise Exception, "Set environment variable TMP_DIR to some path."
+  return os.path.join(path, filename)
 
 def get_float(s):
   """Return string as float or as None if it cannot be converted.
@@ -160,8 +185,8 @@ class EQTLFilter(Filter):
     Log.info("Added GENE_SYMBOL, NUM_VALUES, MEAN, STD to col titles for %s." %\
              self)
              
-    # Open new temporary file.
-    filepath = "%s/%s.tmp.%d" % (TMP_DIR, self.gse.id, 0)
+    # Open new temporary file. XXX RENAME
+    filepath = temp_file_name("%s.rowmerge" % self.gse.id)
     fp_out = open(filepath, "w")
 
     # 2: @DATAPASS 1: Merge columns, add gene symbol, filter non-genes.
