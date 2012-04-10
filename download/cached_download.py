@@ -19,8 +19,11 @@ import gzip3 as gzip
 import download
 
 # Hack to import application level Log object without adding it to global path
-#sys.path.append("..")
-from ..logger import Log
+try:
+  from logger import Log
+except ImportError:
+  sys.path.append("..")
+  from ..logger import Log
 
 
 # ENVIRONMENT SPECIFIC CACHE_DIR PATH
