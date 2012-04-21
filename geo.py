@@ -218,19 +218,13 @@ class GSE(object):
     # 6. Estimate number of data rows from first sample attribute "data_row_count"
     # ==========
     if len(self.samples) > 0:
+      # get all sample's data_row_counts
       try:
-        self.est_num_row = int(self.samples.values()[0].attr['data_row_count'][0])
+        s = [int(q.attr['data_row_count'][0]) for q in self.samples.values()]
+        self.est_num_row = max(s)
       except Exception, e:
         Log.warning("Could not estimate number of data rows for %s: %s" % \
           (self, e))
-      # XXX DEBUG:
-#       WARNING 2012-04-05 22:28:39,725 geo._populate 209 Could not estimate number of data rows for [GEO GSE19177-GPL6986 (4331613264)]: 'data_row_count'
-# {}
-# {}
-        import sys
-        print self.samples.values()[0].attr
-        print self.samples.values()[1].attr
-        sys.exit(1)
         
 
     # 7. Log population result and statistics
@@ -736,6 +730,7 @@ class GPL(object):
     col_desc: {str:str} of column names to descriptions
     attrs: {str: [str]} of GPL attributes
     special_cols: {str:str} of special column title to its actual column title
+    case_insensitive_row_id: {str:str} of row_id in lowercase to actual case
     parameters: {str: obj} of supplied metadata not derived from GPL definition
       Recognized parameters:
         all KEYWORDS column names, for example:
@@ -766,6 +761,14 @@ class GPL(object):
       'CHROMOSOME': set(['chromosome', 'chrom', 'chr', 'ch']),
       'LOCATION': set(['mapinfo', 'map', 'info', 'loci', 'locus', 'loc', 'location', 'pos', 'position'])}
     }
+  # Preferred order of gene row identification symbol
+  EQTL_GENE_NAME_LIST = [
+    'GENE_SYMBOL',
+    'ENTREZ_GENE_ID',
+    'ENSEMBL_ID',
+    'REFSEQ_ACC',
+    'GENBANK_ACC',
+    ]
   COL_TYPE_RX = {
     # see: http://www.genenames.org/guidelines.html
     'GENE_SYMBOL': '[A-Z][a-zA-Z0-9-]+',
@@ -800,6 +803,7 @@ class GPL(object):
     self.type = study_type
     self.special_cols = {}
     self.attrs = {}
+    self.case_insensitive_row_id = {}
     # Set external parameters, update with custom user settings if they exist.
     self.parameters = GPL_SETTINGS.get(self.id, {}).copy()
     if custom_parameters:
@@ -984,14 +988,16 @@ class GPL(object):
     else:
       desc = None
     if best_score[1] <= 1:
+      # Do not return weak results.
       Log.warning("%s %s column not found with confidence. Best: '%s: %s'" % \
                   (self, name, title, desc))
+      title = None
     else:
       Log.info("Mapped '%s' to col title '%s: %s' for %s. Confidence: %d" % \
                (name, title, desc, self, score))
                   
     # Return name of highest scoring GPL column title.
-    return best_score[0]
+    return title
 
   def get_column(self, row_id, name):
     """Return value of special column at row id.
@@ -1013,7 +1019,11 @@ class GPL(object):
         "Special column %s not defined for %s of type %s. Defined cols: %s" % \
         (name, self, self.type, self.KEYWORDS[self.type].keys())
 
-    row = self.row_desc[row_id]
+    try:
+      row = self.row_desc[row_id]
+    except KeyError:
+      row_id = self.case_insensitive_row_id[row_id.lower()]
+      row = self.row_desc[row_id]
     # Attempt to return this column value at this row, else return None
     try:
       value = row[key]
@@ -1094,6 +1104,9 @@ class GPL(object):
       # Create new dictionary for this row_id.
       row_id = row[0]
       self.row_desc[row_id] = {}
+      # XXX DEBUG
+      import sys
+
 
       # Populate the attributes for this row.
       for i in range(1, len(row)):
@@ -1102,6 +1115,13 @@ class GPL(object):
         # Ignore empty values.
         if value != "":
           self.row_desc[row_id][name] = value
+          
+      # Add row_id to case-insensitive map.
+      if row_id.lower() in self.case_insensitive_row_id:
+        Log.warning("Multiple case-insensitive row_ids map row_id %s for %s" %\
+          (row_id.lower(), self))
+      else:
+        self.case_insensitive_row_id[row_id.lower()] = row_id
           
     # 4. Clean Up
     Log.info("Populated %s with %d row descriptions of %d columns." % \

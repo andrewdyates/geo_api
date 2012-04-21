@@ -346,7 +346,10 @@ class CachedDownload(download.Download):
     try:
       rsp = urllib2.urlopen(req)
     except urllib2.URLError:
-      self.status = rsp.code
+      if 'rsp' in locals():
+        self.status = rsp.code
+      else:
+        self.status = None
       raise
     return rsp
 

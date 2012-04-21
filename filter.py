@@ -7,8 +7,6 @@ TMP_DIR: path to temporary directory
 import os
 import pylab
 import random
-import subprocess
-import sys
 import time
 
 import geo
@@ -172,18 +170,34 @@ class EQTLFilter(Filter):
     else:
       Log.info("No col_map. Will not merge %d columns for %s." % \
                (len(self.col_titles), self))
+
+    # 0. Determine best gene name column in case GENE_SYMBOL does not exist.
+    # ==========
+    gene_symbol_name = None
+    for name in geo.GPL.EQTL_GENE_NAME_LIST:
+      if self.gse.platform.special_cols[name] is None:
+        continue
+      else:
+        actual_column_name = self.gse.platform.special_cols[name]
+        gene_symbol_name = name
+    if gene_symbol_name:
+      Log.info("Selected column '%s=>%s' to best represent gene name for %s." %\
+        (gene_symbol_name, actual_column_name, self.gse.platform))
+    else:
+      raise MalformedFilterError, "Cannot select gene symbol column from %s" % \
+        (self.gse.platform)
     
     # 1. Update column titles accounting for merged columns.
     # ==========
     if self.col_map:
       self.col_titles = self._merge_cols(self.col_titles, merge_titles)
       
-    # Insert "GENE_SYMBOL" column title in second column (AFTER merging columns)
+    # Insert generated column titles (AFTER merging columns)
     # self.col_titles[0] should always be "ID_REF"
-    col_titles_prefix = ["ID_REF", "GENE_SYMBOL", "NUM_VALUES", "MEAN", "STD"]
+    col_titles_prefix = ["ID_REF", gene_symbol_name, "NUM_VALUES", "MEAN", "STD"]
     self.col_titles = col_titles_prefix + self.col_titles[1:]
-    Log.info("Added GENE_SYMBOL, NUM_VALUES, MEAN, STD to col titles for %s." %\
-             self)
+    Log.info("Added %s, NUM_VALUES, MEAN, STD to col titles for %s." %\
+             (gene_symbol_name, self))
              
     # Open new temporary file. XXX RENAME
     filepath = temp_file_name("%s.rowmerge" % self.gse.id)
@@ -201,7 +215,7 @@ class EQTLFilter(Filter):
 
       # Determine gene symbol for this row. Filter if no gene symbol exists.
       row_id = row[0] # Row ID should always be the first entry in a row.
-      gene_sym = self.gse.platform.get_column(row_id, "GENE_SYMBOL")
+      gene_sym = self.gse.platform.get_column(row_id, gene_symbol_name)
       if not gene_sym:
         self.rows_filtered.append(row_id)
         continue # skip this row
