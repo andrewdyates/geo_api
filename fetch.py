@@ -1,13 +1,16 @@
 #!/usr/bin/python
 """Write a single, filtered GSE study in MINE format to STDOUT. 
+Script wrapper for geo_api. 
 Does not handle pseudo-super or super studies.
 """
+USE_MSG = "USE: fetch.py GSE_ID [GPL_ID]"
+
 from geo import *
 from filter import *
 import sys
 
 
-def fetch(gse="GSE25935", gpl=None):
+def fetch(gse, gpl=None):
   g = GSE(gse, platform_id=gpl) 
   filt2 = EQTLFilter(g)
 
@@ -35,4 +38,5 @@ if __name__ == "__main__":
     # GSE id, plus GPL platform for psuedo-studies
     fetch(sys.argv[1], sys.argv[2])
   else:
-    fetch()
+    print USE_MSG
+    sys.exit(1)
