@@ -2,6 +2,10 @@
 """GEO (Genetic Expression Omnibus) self-contained objects.
 
 Andrew D. Yates
+
+TODO: 
+  add support for miRNA expression type studies
+  add support for SNP genomic sequencing type studies
 """
 import re
 import csv

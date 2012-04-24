@@ -2,6 +2,9 @@ Download raw GEO data, filter data into standard representation, and model GEO o
 
 GEO: www.ncbi.nlm.nih.gov/geo
 
+To run without thinking about how this module works, try:
+$ python script.py [Your GSE_ID]
+
 ENVIRONMENT VARIABLES
 =====================
 set like

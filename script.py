@@ -84,8 +84,11 @@ def write_study(gse, fp_log, out_dir=""):
   n_lines = 0
   for row in filt2.get_rows():
     n_lines += 1
-    # Skip headers
-    if n_lines == 1: continue
+    # DO NOT Skip headers.
+    # If this is the first line, print a "#" to indicate that this is a header line
+    if n_lines == 1:
+      fp.write('#')
+    
     # First 5 columns: 'ID_REF', 'GENE_SYMBOL', 'NUM_VALUES', 'MEAN', 'STD'
     #   remove all but 'GENE_SYMBOL' column which should be made first column
     row = [row[1]] + row[5:]
