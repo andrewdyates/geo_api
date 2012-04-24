@@ -66,6 +66,7 @@ def main(gse_id, gpl_id=None, out_dir=""):
   # Otherwise, simply fetch G itself.
   else:
     report("%s is a child study. Fetching it directly..." % (g), fp_log)
+    write_study(g, fp_log, out_dir)
 
 
 def write_study(gse, fp_log, out_dir=""):
