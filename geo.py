@@ -194,20 +194,22 @@ class GSE(object):
       self._populate_gsms(fp)
       Log.info("GSMs Populated from file pointer, closing %s" % (fp))
       # fp now points to first line after header
-      # Check that GSM samples seem to have been populated.
-      empty_keys = filter(lambda x: not self.samples[x].populated, self.samples)
-      n_empty = len(empty_keys)
-      if n_empty > 0:
-        # If this is a pseudo-study, 
-        #   filter studies not populated from the series matrix file
-        if self.pseudo:
-          for key in empty_keys:
-            del self.samples[key]
-          Log.info("Filtered %d of %d samples from series matrix for %s." % \
-            (len(self.samples), n_empty+len(self.samples), self))
-        else:
-          Log.warning("Not all samples in %s (only %d of %d) have attributes." % \
-            (self, n_empty, len(self.samples)))
+      
+    # Check that GSM samples have been populated.
+    # Sometimes, not all samples are included in substudies.
+    empty_keys = filter(lambda x: not self.samples[x].populated, self.samples)
+    n_empty = len(empty_keys)
+    if n_empty > 0:
+      # If this is a pseudo-study, then filter samples expected from the super study
+      #   but which are not actually populated from the series matrix file.
+      if self.pseudo:
+        for key in empty_keys:
+          del self.samples[key]
+        Log.info("Filtered %d of %d samples from series matrix for %s." % \
+          (len(self.samples), n_empty+len(self.samples), self))
+      else:
+        Log.warning("Not all samples in %s (only %d of %d) have attributes." % \
+          (self, n_empty, len(self.samples)))
 
     # 5. Populate column titles given fp pointing after header. Close fp.
     # ==========
@@ -667,18 +669,15 @@ class GSE(object):
 
     # All header lines have been consumed.
     # Map column entries per row to GSE samples instances by GSE ID order.
-    # We assume that there exists only one row of data in the accession list.
+    # We assume that there exists only one row for "geo_accession"
     sample_list = sample_attrs["geo_accession"][0]
     Log.info("Populating %d GSM samples for %s" % (len(sample_list), self))
 
     # Use position "i" to map this sample with its column of attributes.
-    for i in range(len(sample_list)):
+    for i, gsm_id in enumerate(sample_list):
 
-      # Identify our current sample GSE at column i
-      gsm_id = sample_list[i]
+      # Populate sample from its corresponding row in the series matrix file.
       sample = self.samples[gsm_id]
-        
-      # Populate this sample from this GSE's corresponding column of values.
       for key, rows in sample_attrs.items():
         for row in rows:
           sample.add_pair(key, row[i])
@@ -1104,9 +1103,6 @@ class GPL(object):
       # Create new dictionary for this row_id.
       row_id = row[0]
       self.row_desc[row_id] = {}
-      # XXX DEBUG
-      import sys
-
 
       # Populate the attributes for this row.
       for i in range(1, len(row)):
