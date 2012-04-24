@@ -3,6 +3,8 @@
 
 Environment variables:
 TMP_DIR: path to temporary directory
+
+TODO: Configure filter parameters
 """
 import os
 import pylab
@@ -286,8 +288,9 @@ class EQTLFilter(Filter):
 
     # Sort row_ids by row standard deviation in decreasing order.
     selected_row_ids.sort(key=lambda x: self.row_stats[x]['std'], reverse=True)
+    
     # Select top 75%. Convert type to set for easier membership tests.
-
+    # TODO: these parameters should be configurable.
     x = int(len(selected_row_ids)*0.75)
     selected_row_ids = set(selected_row_ids[:x])
     threshold_num_rows = len(selected_row_ids)

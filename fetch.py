@@ -3,7 +3,7 @@
 Script wrapper for geo_api. 
 Does not handle pseudo-super or super studies.
 """
-USE_MSG = "USE: fetch.py GSE_ID [GPL_ID]"
+USE_MSG = "USE: python fetch.py GSE_ID [GPL_ID] > mymatrix.tab 2> mymatrix_log.txt"
 
 from geo import *
 from filter import *
@@ -35,7 +35,7 @@ if __name__ == "__main__":
     # only GSE id
     fetch(sys.argv[1])
   elif len(sys.argv) == 3:
-    # GSE id, plus GPL platform for psuedo-studies
+    # GSE id, plus GPL platform for pseudo-studies
     fetch(sys.argv[1], sys.argv[2])
   else:
     print USE_MSG
