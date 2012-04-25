@@ -176,12 +176,17 @@ class EQTLFilter(Filter):
     # 0. Determine best gene name column in case GENE_SYMBOL does not exist.
     # ==========
     gene_symbol_name = None
+    # Traverse column names in preferred order.
     for name in geo.GPL.EQTL_GENE_NAME_LIST:
+      # Skip columns without assignments. Continue
       if self.gse.platform.special_cols[name] is None:
         continue
+      # Choose the first column that has an acceptable assignment. Break.
       else:
         actual_column_name = self.gse.platform.special_cols[name]
         gene_symbol_name = name
+        break
+    # Verify that a column was chosen to identify the row.
     if gene_symbol_name:
       Log.info("Selected column '%s=>%s' to best represent gene name for %s." %\
         (gene_symbol_name, actual_column_name, self.gse.platform))

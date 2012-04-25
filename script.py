@@ -40,6 +40,9 @@ def report(msg, fp):
 
 def main(gse_id, gpl_id=None, out_dir=""):
 
+  # Verify that out_dir exists, and if not, create it.
+  if not (os.path.exists(out_dir) and os.path.isdir(out_dir)):
+    os.makedirs(out_dir)
   # Open log, write job description
   fp_log = open(os.path.join(out_dir, "log.txt"), "w")
   msg = ["Fetching GSE %s " % gse_id]
