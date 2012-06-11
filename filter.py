@@ -106,11 +106,13 @@ class EQTLFilter(Filter):
     row_stats: {str: {'num_values': int, 'mean': float, 'std': float}} per rowID
       note: only rows not in rows_filtered are in row_stats
   """
-  def __init__(self, gse):
+  def __init__(self, gse, merge_cols=True, percentile=.75):
     """Initialize filter. Requires populated gse.
 
     Args:
       gse: GSE instance associated with row_iter
+      merge_cols: bool if to merge columns if able
+      percentile: float 0<x<=1 of top percent by std to keep
     """
     # 1. Require that GSE is populated and is of correct type.
     # ==========
@@ -128,6 +130,8 @@ class EQTLFilter(Filter):
     self.rows_filtered = []
     self.rows_per_gene = {}
     self.row_stats = {}
+    self.merge_cols = merge_cols
+    self.percentile = percentile
     
     # 3. Get column map for column merging.
     # ==========
@@ -135,7 +139,7 @@ class EQTLFilter(Filter):
     n_uniques = len(self.gse.subject_gsms)
 
     # If there are more samples than unique subjects, then create column map.
-    if n_samples > n_uniques:
+    if self.merge_cols and n_samples > n_uniques:
       self.col_map = self._make_col_map()
       rx_str = self.gse.parameters['rx_gsm_subject_str']
       Log.info(("Created column merge map for %s (%d samples to %d subjects)" +\
@@ -150,8 +154,8 @@ class EQTLFilter(Filter):
     else:
       # Retrieve the regular expression used
       rx_str = self.gse.parameters['rx_gsm_subject_str']
-      Log.info("No column merge map created for %s using rx '%s'" % \
-        (self.gse, rx_str))
+      Log.info("No column merge map created for %s using rx '%s'. Merge_cols flag is %s" % \
+        (self.gse, rx_str, self.merge_cols))
 
   def __repr__(self):
     return "[EQTLFilter => %s (%d)]" % (self.gse, id(self))
@@ -294,14 +298,13 @@ class EQTLFilter(Filter):
     # Sort row_ids by row standard deviation in decreasing order.
     selected_row_ids.sort(key=lambda x: self.row_stats[x]['std'], reverse=True)
     
-    # Select top 75%. Convert type to set for easier membership tests.
-    # TODO: these parameters should be configurable.
-    x = int(len(selected_row_ids)*0.75)
+    # Select top percentile by std. Convert type to set for easier membership tests.
+    x = int(len(selected_row_ids)*self.percentile)
     selected_row_ids = set(selected_row_ids[:x])
     threshold_num_rows = len(selected_row_ids)
     assert(x == threshold_num_rows)
-    Log.info("Selected top 75%% of rows (%d of %d) by standard deviation." % 
-      (threshold_num_rows, n_single_gene_rows))
+    Log.info("Selected top %d%% of rows (%d of %d) by standard deviation." % 
+      (self.percentile*100, threshold_num_rows, n_single_gene_rows))
       
     # FINAL PASS: YIELD FILTERED LINES
     # ===========

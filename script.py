@@ -7,18 +7,24 @@ Downloads each substudy as a separate file. Writes log about results.
 
 SAMPLE USE:
 $ python script.py GSE15745 2> api_log.txt
+
+$ python script.py GSE25935 percentile=1 merge_cols=0
 """
 USE_MSG = """USE: python script.py GSE_ID [options]
 
 OPTIONS:
-  GPL_ID=str: pseudo substudy GPL ID
-  out_dir=str: path to an output directory
+  GPL_ID=str: pseudo substudy GPL ID [if necessary to specify]
+  out_dir=str: path to output directory where to save downloaded file
+  merge_cols: bool (0 or 1) if to merge same-source columns [default=True]
+  percentile: floot 0 < x <= 1 of percentile by std to keep [default=.75]
 """
 
 import sys
 import os
 import time
 
+# HANDLE GLOBAL ENVIRONMENT AUTOMATICALLY AND BY DEFAULT
+# --------------------
 # Verify that environment variables are set. 
 # If NONE of them are set, we may assume that the user would like to 
 #   use default values: the local, current directory environment.
@@ -38,10 +44,24 @@ def report(msg, fp):
   print msg
 
 
-def main(gse_id, gpl_id=None, out_dir=""):
+def main(gse_id, gpl_id=None, out_dir="", merge_cols=True, percentile=.75):
+  """Main script routine.
+
+  Args:
+    gse_id: str of GSE study ID to download
+    gpl_id: str of specific GPL if GSE has multiple sub studies
+    out_dir: str of path where to save downloads
+    merge_cols: bool if to merge columns from same patient
+    percentile: float of top percentile to keep by standard deviation
+  """
+  if type(percentile) == str:
+    percentile = float(percentile)
+  assert percentile > 0 and percentile <= 1
+  if type(merge_cols) == str:
+    merge_cols = not merge_cols.lower() in ('0', 0, False, "", 'false','f', None)
 
   # Verify that out_dir exists, and if not, create it.
-  if not (os.path.exists(out_dir) and os.path.isdir(out_dir)):
+  if out_dir != "" and not (os.path.exists(out_dir) and os.path.isdir(out_dir)):
     os.makedirs(out_dir)
   # Open log, write job description
   fp_log = open(os.path.join(out_dir, "log.txt"), "w")
@@ -65,26 +85,28 @@ def main(gse_id, gpl_id=None, out_dir=""):
       if gsub.type != "eQTL":
         report("%s is type %s. Skipping..." % (gsub, gsub.type), fp_log)
         continue
-      write_study(gsub, fp_log, out_dir)
+      write_study(gsub, fp_log, out_dir, merge_cols=merge_cols, percentile=percentile)
   # Otherwise, simply fetch G itself.
   else:
     report("%s is a child study. Fetching it directly..." % (g), fp_log)
-    write_study(g, fp_log, out_dir)
+    write_study(g, fp_log, out_dir, merge_cols=merge_cols, percentile=percentile)
 
 
-def write_study(gse, fp_log, out_dir=""):
+def write_study(gse, fp_log, out_dir="", merge_cols=True, percentile=.75):
   """Write a filtered GSE matrix to a new file.
 
   Args:
     gse: geo.GSE non-super study instance
     fp_log: [*str] open writable file pointer for logging
     out_dir: str of output directory
+    merge_cols: bool if to merge columns if possible
+    percentile: float 0<x<=1 of top percentile to keep by std
   """
   filename = "%s.%s.%s.tab" % (gse.id, gse.platform.id, gse.type)
   fp = open(os.path.join(out_dir, filename), "w")
   report("Writing %s to file %s with default EQTLFilter..." % (gse, filename), fp_log)
   
-  filt2 = EQTLFilter(gse)
+  filt2 = EQTLFilter(gse, merge_cols=merge_cols, percentile=percentile)
   n_lines = 0
   for row in filt2.get_rows():
     n_lines += 1
@@ -106,11 +128,17 @@ def write_study(gse, fp_log, out_dir=""):
     
 if __name__ == "__main__":
 
+  if len(sys.argv) == 1 or sys.argv[1].lower().strip('-') in ("h", 'help'):
+    print USE_MSG
+    sys.exit(1)
+    
   try:
     gse_id = sys.argv[1]
     options = dict(map(lambda s: s.split('='), sys.argv[2:]))
   except:
     print USE_MSG
     raise
+
+    
   main(gse_id, **options)
 

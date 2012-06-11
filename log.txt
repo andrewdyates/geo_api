@@ -1,0 +1,2 @@
+Fetching GSE GSE2034 on Mon, 11 Jun 2012 18:27:44 using /Users/qq/Dropbox/biostat/git_repos/geo_api Version 1.0
+Using EQTLFilter only, default parameters
