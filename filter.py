@@ -7,9 +7,9 @@ TMP_DIR: path to temporary directory
 TODO: Configure filter parameters
 """
 import os
-import pylab
 import random
 import time
+import math
 
 import geo
 from logger import Log
@@ -244,8 +244,8 @@ class EQTLFilter(Filter):
       # Compute mean and standard deviation of all non-ID columns
       # check for None specifically since a valid value could be 0
       filtered_row = filter(lambda x: x is not None, row[1:])
-      std = pylab.std(filtered_row)
-      mean = pylab.mean(filtered_row)
+      std = calc_std(filtered_row)
+      mean = calc_mean(filtered_row)
       num_values = len(filtered_row)
       # Store row statistics
       self.row_stats[row_id] = \
@@ -407,3 +407,11 @@ class EQTLFilter(Filter):
           consumed_cols.add(j)
 
     return col_map
+
+  
+def calc_mean(a):
+  return sum(a) / float(len(a))
+
+def calc_std(a):
+  u = calc_mean(a)
+  return math.sqrt(sum([(x-u)**2 for x in a]) / float(len(a)-1))

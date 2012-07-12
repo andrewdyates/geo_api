@@ -15,6 +15,8 @@ CACHE_DIR: complete path to cache directory for downloads
 TMP_DIR: complete path to temporary file directory 
 LOGFILE: complete path to log file if ENV=SERVER
 
+---
+update: removed pylab dependency
 
 
 Copyright (c) 2012, Andrew Yates
