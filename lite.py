@@ -25,15 +25,18 @@ class GPL_Lite(object):
       if not m: break
       key, value = m.groups()
       self.cols[key] = value
-    assert line[:-1] == HEAD_END_LINE
+    s = line.strip('\r\n')
+    assert s == HEAD_END_LINE, "[%s] != [%s]" % (s, HEAD_END_LINE)
     # Column titles
-    assert self.cols.keys() == fp.next().strip('\n').split('\t')
+    titles = fp.next().strip('\r\n').split('\t')
+    assert self.cols.keys() == titles, "%s != %s" % (self.cols.keys(), titles)
     # Data rows
-    for line in fp:
-      line = line.strip('\n')
+    for i, line in enumerate(fp):
+      line = line.strip('\r\n')
       if line == "": continue
       if line == TABLE_END_LINE: break
       row = line.split('\t')
-      self.rows[row[0]] = dict(zip(self.cols[1:], row[1:]))
+      self.rows[row[0]] = dict(zip(self.cols.keys()[1:], row[1:]))
+      self.rows[row[0]]['n'] = i+1
         
     
