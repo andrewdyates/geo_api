@@ -36,7 +36,7 @@ class GPL_Lite(object):
       if line == "": continue
       if line == TABLE_END_LINE: break
       row = line.split('\t')
-      self.rows[row[0]] = dict(zip(self.cols.keys()[1:], row[1:]))
+      self.rows[row[0]] = dict(zip(self.cols.keys(), row))
       self.rows[row[0]]['n'] = i+1
         
     
