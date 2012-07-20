@@ -1,4 +1,6 @@
 *.pyc
 *~
+.#*
+#*
 .DS*
 set_env_settings.sh
