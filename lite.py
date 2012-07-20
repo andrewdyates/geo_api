@@ -38,5 +38,9 @@ class GPL_Lite(object):
       row = line.split('\t')
       self.rows[row[0]] = dict(zip(self.cols.keys(), row))
       self.rows[row[0]]['n'] = i+1
+
+  def get_col_list(self, coltitle):
+    """Return an ordered list of a particular column."""
+    return [d[coltitle] for d in self.rows.values()]
         
     
