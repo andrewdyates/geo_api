@@ -12,11 +12,10 @@ TABLE_END_LINE = "!platform_table_end"
 
 class GPL_Lite(object):
 
-  def __init__(self, filename):
+  def __init__(self, fp):
     self.cols = collections.OrderedDict()
     self.rows = collections.OrderedDict()
     
-    fp = open(filename)
     # GPL ID
     self.id = RX_PLATFORM.match(fp.next()).group(1)
     # Column Attribute Descriptions
