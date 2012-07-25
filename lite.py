@@ -2,8 +2,13 @@
 """Simplistic wrappers for locally loaded GEO objects.
 """
 import re
-import collections
-
+try:
+  # Python 2.7+
+  from collections import OrderedDict
+except ImportError:
+  # Python <=2.6
+  from ordereddict import OrderedDict
+  
 RX_PLATFORM = re.compile("^\^PLATFORM = (\w+)")
 RX_HEADER = re.compile("^#([^=]+?) = ?(.*)")
 RX_ATTR = re.compile("^!Platform_([^=]+?) = ?(.*)")
@@ -13,8 +18,8 @@ TABLE_END_LINE = "!platform_table_end"
 class GPL_Lite(object):
 
   def __init__(self, fp):
-    self.cols = collections.OrderedDict()
-    self.rows = collections.OrderedDict()
+    self.cols = OrderedDict()
+    self.rows = OrderedDict()
     
     # GPL ID
     self.id = RX_PLATFORM.match(fp.next()).group(1)
