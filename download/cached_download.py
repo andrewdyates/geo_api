@@ -30,7 +30,7 @@ except ImportError:
 if 'CACHE_DIR' in os.environ:
   CACHE_DIR = os.environ['CACHE_DIR']
 else:
-  raise Exception, "Set environ var CACHE_DIR to cache directory."
+  CACHE_DIR = None
 
 def get_cache_name(url):
   """Return cache file name from url."""
@@ -83,6 +83,8 @@ class DownloadIter(object):
 
     if cache:
       # Finalized (completely downloaded) cache filename
+      if CACHE_DIR is None:
+        raise Exception, "Set environ var CACHE_DIR to cache directory."
       self.dest_filepath = os.path.join(CACHE_DIR, cache)
       # Add ".tmp" to end of cache filename to indicate cache is incomplete.
       self.tmp_filepath = self.dest_filepath + ".tmp"
@@ -297,6 +299,8 @@ class CachedDownload(download.Download):
     Returns:
       *iter of open, decompressed file pointer from cache or None.
     """
+    if CACHE_DIR is None:
+      raise Exception, "Set environ var CACHE_DIR to cache directory."
     filepath = os.path.join(CACHE_DIR, self.cache_name)
     if os.path.exists(filepath):
       return gzip.open(filepath, "rb")
