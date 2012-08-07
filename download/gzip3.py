@@ -306,8 +306,13 @@ class GzipFile(io.BufferedIOBase):
             raise ValueError("write() on closed GzipFile object")
 
         # Convert data type if called by io.BufferedWriter.
-        if isinstance(data, memoryview):
-            data = data.tobytes()
+        # HACK: Python 2.6 does not recognize 'memoryview'. Check the string of the obj type instead.
+        try:
+            if isinstance(data, memoryview):
+                data = data.tobytes()
+        except NameError:
+            if 'memoryview' in str(type(data)):
+                data = data.tobytes()
 
         if len(data) > 0:
             self.size = self.size + len(data)

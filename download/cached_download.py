@@ -84,7 +84,7 @@ class DownloadIter(object):
     if cache:
       # Finalized (completely downloaded) cache filename
       if CACHE_DIR is None:
-        raise Exception, "Set environ var CACHE_DIR to cache directory."
+        raise Exception, "Set environ variable CACHE_DIR to a system path that this program can use as a cache directory. For example: `export CACHE_DIR=/home/z/Desktop`"
       self.dest_filepath = os.path.join(CACHE_DIR, cache)
       # Add ".tmp" to end of cache filename to indicate cache is incomplete.
       self.tmp_filepath = self.dest_filepath + ".tmp"
