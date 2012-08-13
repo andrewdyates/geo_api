@@ -31,6 +31,7 @@ if 'CACHE_DIR' in os.environ:
   CACHE_DIR = os.environ['CACHE_DIR']
 else:
   CACHE_DIR = None
+print "!", CACHE_DIR
 
 def get_cache_name(url):
   """Return cache file name from url."""
@@ -83,8 +84,13 @@ class DownloadIter(object):
 
     if cache:
       # Finalized (completely downloaded) cache filename
+      global CACHE_DIR
       if CACHE_DIR is None:
-        raise Exception, "Set environ variable CACHE_DIR to a system path that this program can use as a cache directory. For example: `export CACHE_DIR=/home/z/Desktop`"
+        # try to get cache directory from settings in runtime
+        if "CACHE_DIR" in os.environ:
+          CACHE_DIR = os.environ["CACHE_DIR"]
+        if CACHE_DIR is None:
+          raise Exception, "Set environ variable CACHE_DIR to a system path that this program can use as a cache directory. For example: `export CACHE_DIR=/home/z/Desktop` or in Python, `os.environ['CACHE_DIR'] = '/my/path'`"
       self.dest_filepath = os.path.join(CACHE_DIR, cache)
       # Add ".tmp" to end of cache filename to indicate cache is incomplete.
       self.tmp_filepath = self.dest_filepath + ".tmp"

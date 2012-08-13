@@ -689,6 +689,10 @@ class GSE(object):
             
       # Map this samples' subject to its GSE ID
       self.subject_gsms.setdefault(sample.subject, []).append(gsm_id)
+      
+    # Correct multiple sample attributes assigned to the same name
+    for gsm_id, sample in self.samples.items():
+      sample.split_derivatives()
     
 
 class FTPFile(object):
@@ -1170,3 +1174,19 @@ class GSM(object):
                     (value, self, self.rx_title))
       else:
         self.subject, self.rep = m.groups()
+
+  def split_derivatives(self):
+    """Attempt to split multi-attributes assigned to a single attribute key."""
+    for k, v in self.attr.items():
+      if len(v) > 1:
+        new_attrs = {}
+        old_values = set()
+        for x in v:
+          q = [s.strip() for s in x.split(':')]
+          if len(q) == 2:
+            new_attrs.setdefault("%s:%s"%(k,q[0]), set()).add(q[1])
+          else:
+            old_values.add(x)
+        self.attr[k] = old_values
+        self.attr.update(new_attrs)
+      
