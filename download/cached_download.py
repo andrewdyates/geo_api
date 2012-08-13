@@ -31,7 +31,6 @@ if 'CACHE_DIR' in os.environ:
   CACHE_DIR = os.environ['CACHE_DIR']
 else:
   CACHE_DIR = None
-print "!", CACHE_DIR
 
 def get_cache_name(url):
   """Return cache file name from url."""
