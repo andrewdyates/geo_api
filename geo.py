@@ -888,6 +888,7 @@ class GPL(object):
     url = self.PTN_GPL_QUICK % {'id': self.id}
     handle = Download(url)
     http_fp = handle.read()
+    Log.info("Fetched %s while loading %s." % (url, self))
     return http_fp
 
 
@@ -1055,12 +1056,10 @@ class GPL(object):
       Log.warning("%s already loaded." % self)
       return
     
-    url = self.PTN_GPL % {'id': self.id}
-    handle = Download(url)
-    http_fp = handle.read()
+    http_fp = self._get_fp()
     self._parse(http_fp)
-    Log.info("Fetched %s while loading %s." % (url, self))
     http_fp.close()
+
     # Verify that at least one row description has been loaded.
     if len(self.row_desc) < 1:
       Log.warning("No row descriptions loaded for %s." % self)
@@ -1138,6 +1137,15 @@ class GPL(object):
              (self, len(self.row_desc), len(self.col_titles)))
     fp.close()
 
+  @classmethod
+  def fp_download(cls, gpl_id):
+    url = cls.PTN_GPL % {'id': gpl_id}
+    handle = Download(url)
+    return handle.read()
+    
+    
+
+
     
 class GSM(object):
   """A GEO Sample definition.
@@ -1201,6 +1209,8 @@ class LocalGPL(GPL):
   def __init__(self, fname, *args, **kwds):
     self.fname = fname
     super(LocalGPL, self).__init__(*args, **kwds)
+
   def _get_fp(self):
     """Return file pointer."""
+    Log.info("Loaded %s from file while loading %s." % (self.fname, self))
     return open(self.fname, "r")
