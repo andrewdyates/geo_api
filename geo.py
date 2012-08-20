@@ -819,6 +819,10 @@ class GPL(object):
     # Populate self with meta data
     self._populate()
 
+  @property
+  def url(self):
+    return self.PTN_GPL_QUICK % {'id': self.id}
+
   def _check_id(self, line):
     """Raise error if platform id parsed from `line` does not match self.id."""
     try:
