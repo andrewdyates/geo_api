@@ -333,7 +333,6 @@ class GSE(object):
 
     # 2. Interpret next lines as "!" prefixed attributes.
     # ==========
-    import sys
     for line in fp:
       line = line.strip()
       if line == "":
@@ -825,7 +824,7 @@ class GPL(object):
 
   @property
   def url(self):
-    return self.PTN_GPL_QUICK % {'id': self.id}
+    return self.PTN_GPL_FULL % {'id': self.id}
 
   def _check_id(self, line):
     """Raise error if platform id parsed from `line` does not match self.id."""
