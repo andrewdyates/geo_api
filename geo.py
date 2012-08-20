@@ -888,20 +888,27 @@ class GPL(object):
     return "[GPL %s (%d)]" % (self.id, id(self))
 
   def _get_fp(self):
-    """Return file pointer to http connection."""
+    """Return file pointer to http connection for GPL data."""
+    url = self.PTN_GPL % {'id': self.id}
+    handle = Download(url)
+    http_fp = handle.read()
+    Log.info("Fetched %s while loading %s." % (url, self))
+    return http_fp
+
+  def _get_fp_brief(self):
+    """Return file pointer to http connection for GPL brief."""
     url = self.PTN_GPL_QUICK % {'id': self.id}
     handle = Download(url)
     http_fp = handle.read()
     Log.info("Fetched %s while loading %s." % (url, self))
     return http_fp
 
-
   def _populate(self):
     """Populate self with meta data, but not row descriptions."""
 
     # 1. Open GEO and load description of this GPL
     # ==========
-    http_fp = self._get_fp()
+    http_fp = self._get_fp_brief()
     self._parse_brief(http_fp)
     http_fp.close()
 
