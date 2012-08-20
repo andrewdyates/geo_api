@@ -723,7 +723,7 @@ class FTPFile(object):
   def __repr__(self):
     return "[FTPFile %s (%d)]" % (self.filename, id(self))
 
-  
+
 class GPL(object):
   """A GEO Platform definition.
 
@@ -883,14 +883,20 @@ class GPL(object):
     #TODO: include type
     return "[GPL %s (%d)]" % (self.id, id(self))
 
+  def _get_fp(self):
+    """Return file pointer to http connection."""
+    url = self.PTN_GPL_QUICK % {'id': self.id}
+    handle = Download(url)
+    http_fp = handle.read()
+    return http_fp
+
+
   def _populate(self):
     """Populate self with meta data, but not row descriptions."""
 
     # 1. Open GEO and load description of this GPL
     # ==========
-    url = self.PTN_GPL_QUICK % {'id': self.id}
-    handle = Download(url)
-    http_fp = handle.read()
+    http_fp = self._get_fp()
     self._parse_brief(http_fp)
     http_fp.close()
 
@@ -1190,3 +1196,11 @@ class GSM(object):
         self.attr[k] = old_values
         self.attr.update(new_attrs)
       
+class LocalGPL(GPL):
+  """GPL object created from file."""
+  def __init__(self, fname, *args, **kwds):
+    self.fname = fname
+    super(LocalGPL, self).__init__(*args, **kwds)
+  def _get_fp(self):
+    """Return file pointer."""
+    return open(self.fname, "r")
