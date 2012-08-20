@@ -745,6 +745,7 @@ class GPL(object):
   """
   PTN_GPL = "http://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=%(id)s&targ=gpl&view=data&form=text"
   PTN_GPL_QUICK = "http://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=%(id)s&targ=self&view=quick&form=text"
+  PTN_GPL_FULL = "http://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GPL570&targ=gpl&view=full&form=text"
   RX_PLATFORM = re.compile("^\^PLATFORM = (\w+)")
   # matches key, value
   RX_HEADER = re.compile("^#([^=]+?) = ?(.*)")
@@ -1150,11 +1151,10 @@ class GPL(object):
 
   @classmethod
   def fp_download(cls, gpl_id):
-    url = cls.PTN_GPL % {'id': gpl_id}
+    """Download full GPL definition."""
+    url = cls.PTN_GPL_FULL % {'id': gpl_id}
     handle = Download(url)
     return handle.read()
-    
-    
 
 
     
@@ -1225,3 +1225,6 @@ class LocalGPL(GPL):
     """Return file pointer."""
     Log.info("Loaded %s from file while loading %s." % (self.fname, self))
     return open(self.fname, "r")
+  
+  def _get_fp_brief(self):
+    return self._get_fp()
