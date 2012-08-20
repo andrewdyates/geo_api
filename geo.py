@@ -312,7 +312,7 @@ class GSE(object):
     http_fp.close()
 
   def _parse_brief(self, fp):
-    """Parse GPL text brief from GEO website.
+    """Parse GSE text brief from GEO website.
 
     Args:
       fp: iter=>str of "!header" format lines
@@ -344,10 +344,6 @@ class GSE(object):
         raise MalformedDataError, "Cannot parse header line '%s' in %s" % \
           (line, self)
       key, value = key.strip(), value.strip()
-
-      # Ignore attribute 'sample_id' because it may be very large and may be related to many different studies.
-      if key == 'sample_id' and self.IGNORE_SAMPLE_IDS:
-        continue
       
       # Add header to attribute dict.
       self.attr.setdefault(key, []).append(value)
@@ -843,7 +839,7 @@ class GPL(object):
           "GPL ID %s differs from requested ID %s." % (platform_id, self.id)
   
   def _parse_brief(self, fp):
-    """Parse GEO QUICK SOFT report for this GPL.
+    """Parse GPL QUICK SOFT report.
 
     Args:
       fp: [*str] of open line iterator to quick view, text form GPL description
@@ -869,7 +865,9 @@ class GPL(object):
       m = self.RX_ATTR.match(line)
       if m:
         key, value = m.groups()
-        self.attrs.setdefault(key, []).append(value)
+        # Ignore attribute 'sample_id' because it may be very large and may be related to many different studies.
+        if not (key == 'sample_id' and self.IGNORE_SAMPLE_IDS):
+          self.attrs.setdefault(key, []).append(value)
         continue
 
       # Is this the end line? Exit loop.
