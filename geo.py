@@ -312,7 +312,7 @@ class GSE(object):
     http_fp.close()
 
   def _parse_brief(self, fp):
-    """Parse GSE text brief from GEO website.
+    """Parse GPL text brief from GEO website.
 
     Args:
       fp: iter=>str of "!header" format lines
@@ -333,6 +333,7 @@ class GSE(object):
 
     # 2. Interpret next lines as "!" prefixed attributes.
     # ==========
+    import sys
     for line in fp:
       line = line.strip()
       if line == "":
@@ -343,6 +344,11 @@ class GSE(object):
         raise MalformedDataError, "Cannot parse header line '%s' in %s" % \
           (line, self)
       key, value = key.strip(), value.strip()
+
+      # Ignore attribute 'sample_id' because it may be very large and may be related to many different studies.
+      if key == 'sample_id' and self.IGNORE_SAMPLE_IDS:
+        continue
+      
       # Add header to attribute dict.
       self.attr.setdefault(key, []).append(value)
 
@@ -752,6 +758,7 @@ class GPL(object):
   RX_ATTR = re.compile("^!Platform_([^=]+?) = ?(.*)")
   HEAD_END_LINE = "!platform_table_begin"
   TABLE_END_LINE = "!platform_table_end"
+  IGNORE_SAMPLE_IDS = True # set to False to load 'sample_id' attribute list from GPL file definition.
 
   # Use these keywords to find special columns and determine study type
   # {type: {col_name: [key_words]}}
@@ -1102,11 +1109,15 @@ class GPL(object):
       m = self.RX_HEADER.match(line)
       # Only handle header lines in this loop.
       if not m:
-        # This must be the end header line. 
-        if line != self.HEAD_END_LINE:
+        if line[0] == "!":
+          if line == self.HEAD_END_LINE:
+            break
+          else:
+            # This is a header line from a 'full' GPL definition file. Ignore it.
+            continue
+        else:
           raise MalformedDataError, \
-            "Unrecognized line '%s' while parsing %s" % (line, self.id)
-        break
+              "Unrecognized line '%s' while parsing %s" % (line, self.id)
       key, value = m.groups()
       self.col_desc[key] = value
 
@@ -1150,9 +1161,23 @@ class GPL(object):
     fp.close()
 
   @classmethod
-  def fp_download(cls, gpl_id):
+  def fp_download_full(cls, gpl_id):
     """Download full GPL definition."""
     url = cls.PTN_GPL_FULL % {'id': gpl_id}
+    handle = Download(url)
+    return handle.read()
+
+  @classmethod
+  def fp_download_data(cls, gpl_id):
+    """Download full GPL definition."""
+    url = cls.PTN_GPL_FULL % {'id': gpl_id}
+    handle = Download(url)
+    return handle.read()
+
+  @classmethod
+  def fp_download_brief(cls, gpl_id):
+    """Download full GPL definition."""
+    url = cls.PTN_GPL_QUICK % {'id': gpl_id}
     handle = Download(url)
     return handle.read()
 
