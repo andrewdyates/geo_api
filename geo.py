@@ -825,6 +825,10 @@ class GPL(object):
   @property
   def url(self):
     return self.PTN_GPL_FULL % {'id': self.id}
+  
+  @property
+  def brief_url(self):
+    return self.PTN_GPL_QUICK % {'id': self.id}
 
   def _check_id(self, line):
     """Raise error if platform id parsed from `line` does not match self.id."""
@@ -1061,8 +1065,6 @@ class GPL(object):
       value = None
     return value
 
-  #TODO: populate from 
-  
   def load(self):
     """Fetch GPL row definitions, load values into this object.
     """
