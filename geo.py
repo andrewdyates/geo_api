@@ -1240,17 +1240,47 @@ class GSM(object):
         self.attr.update(new_attrs)
       
 class LocalGPL(GPL):
-  """GPL object created from file."""
-  def __init__(self, fname_brief=None, fname_data=None, *args, **kwds):
+  """GPL object created from file.
+
+  Optionally handles fname_data in .tab format.
+  """
+  def __init__(self, fname_brief=None, fname_data=None, data_is_tab=False, *args, **kwds):
     assert fname_brief and fname_data
-    self.fname_brief, self.fname_data = fname_brief, fname_data
-    super(LocalGPL, self).__init__(*args, **kwds)
+    self.fname_brief, self.fname_data, self.data_is_tab = fname_brief, fname_data, data_is_tab
+
+    # get GPL ID from first line of GPL brief
+    gpl_id = self.RX_PLATFORM.match(open(fname_brief).next()).group(1)
+    super(LocalGPL, self).__init__(gpl_id, *args, **kwds)
 
   def _get_fp(self):
     Log.info("Loaded %s from file while loading %s." % (self.fname_data, self))
-    return open(self.fname_data, "r")
+    if self.data_is_tab:
+      return FauxGPLFile(open(self.fname_data, "r"), gpl_id=self.id)
+    else:
+      return open(self.fname_data, "r")
   
   def _get_fp_brief(self):
     Log.info("Loaded %s from file while loading %s." % (self.fname_brief, self))
     return open(self.fname_brief, "r")
 
+                           
+
+class FauxGPLFile(object):
+  FIRST_LINE_PTN = "^PLATFORM = %s"
+  def __init__(self, fp, gpl_id):
+    self.n_line = 0
+    self.gpl_id = gpl_id
+    self.fp = fp
+  def __iter__(self):
+    return self
+  def next(self):
+    self. n_line += 1
+    if self.n_line == 1:
+      return self.FIRST_LINE_PTN % self.gpl_id
+    elif self.n_line == 2:
+      # handle column titles
+      return None       # TODO
+    else:
+      return self.fp.next()
+  def close():
+    self.fp.close()
