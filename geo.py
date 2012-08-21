@@ -1278,9 +1278,13 @@ class FauxGPLFile(object):
     if self.n_line == 1:
       return self.FIRST_LINE_PTN % self.gpl_id
     elif self.n_line == 2:
-      # handle column titles
-      return None       # TODO
+      return GPL.HEAD_END_LINE+"\n"
+    elif self.n_line == 3:
+      line = self.fp.next()
+      assert line[0] == '#'
+      return line[1:]
     else:
       return self.fp.next()
-  def close():
+    
+  def close(self):
     self.fp.close()
