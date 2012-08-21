@@ -1241,14 +1241,16 @@ class GSM(object):
       
 class LocalGPL(GPL):
   """GPL object created from file."""
-  def __init__(self, fname, *args, **kwds):
-    self.fname = fname
+  def __init__(self, fname_brief=None, fname_data=None, *args, **kwds):
+    assert fname_brief and fname_data
+    self.fname_brief, self.fname_data = fname_brief, fname_data
     super(LocalGPL, self).__init__(*args, **kwds)
 
   def _get_fp(self):
-    """Return file pointer."""
-    Log.info("Loaded %s from file while loading %s." % (self.fname, self))
-    return open(self.fname, "r")
+    Log.info("Loaded %s from file while loading %s." % (self.fname_data, self))
+    return open(self.fname_data, "r")
   
   def _get_fp_brief(self):
-    return self._get_fp()
+    Log.info("Loaded %s from file while loading %s." % (self.fname_brief, self))
+    return open(self.fname_brief, "r")
+
