@@ -1106,8 +1106,7 @@ class GPL(object):
       raise MalformedDataError, \
           "GPL ID %s differs from requested ID %s." % (platform_id, self.id)
     
-    # 1. Collect attributes and column titles.
-    n_row = 0
+    # 1. Collect GPL attributes and column titles.
     for line in fp:
       line = line.strip()
       m = self.RX_HEADER.match(line)
@@ -1124,16 +1123,13 @@ class GPL(object):
               "Unrecognized line '%s' while parsing %s" % (line, self.id)
       key, value = m.groups()
       self.col_desc[key] = value
-      # Add key to row list.
-      self.probe_list.append(key)
-      self.probe_idx_map[key] = n_row
-      n_row += 1
 
     # 2. Collect column titles from first row of data.
     line = fp.next()
     self.col_titles = line.strip().split("\t")
       
-    # 3. 
+    # 3. Load probe definitions.
+    n_row = 0
     for line in fp:
       
       # Only strip end-of-line characters to avoid column misalignment.
@@ -1157,15 +1153,23 @@ class GPL(object):
           self.row_desc[row_id][name] = value
           
       # Add row_id to case-insensitive map.
+      #   (use this for debugging when row_ids have letter case errors.)
       if row_id.lower() in self.case_insensitive_row_id:
         Log.warning("Multiple case-insensitive row_ids map row_id %s for %s" %\
           (row_id.lower(), self))
       else:
         self.case_insensitive_row_id[row_id.lower()] = row_id
+
+      # Add row_id to row list.
+      self.probe_list.append(row_id)
+      self.probe_idx_map[row_id] = n_row
+      n_row += 1
           
     # 4. Clean Up
     Log.info("Populated %s with %d row descriptions of %d columns." % \
              (self, len(self.row_desc), len(self.col_titles)))
+    Log.info("%d row_ids in list, %d unique row_ids." % \
+             (len(self.probe_list), len(self.probe_idx_map)))
     fp.close()
 
   @classmethod
