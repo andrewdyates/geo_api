@@ -1280,6 +1280,7 @@ class LocalGPL(GPL):
                            
 
 class FauxGPLFile(object):
+  """Fake file object to make a .tab file look like a GPL SOFT formatted file."""
   FIRST_LINE_PTN = "^PLATFORM = %s"
   def __init__(self, fp, gpl_id):
     self.n_line = 0
@@ -1302,3 +1303,5 @@ class FauxGPLFile(object):
     
   def close(self):
     self.fp.close()
+
+
