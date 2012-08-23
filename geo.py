@@ -343,6 +343,7 @@ class GSE(object):
         raise MalformedDataError, "Cannot parse header line '%s' in %s" % \
           (line, self)
       key, value = key.strip(), value.strip()
+      
       # Add header to attribute dict.
       self.attr.setdefault(key, []).append(value)
 
@@ -723,13 +724,15 @@ class FTPFile(object):
   def __repr__(self):
     return "[FTPFile %s (%d)]" % (self.filename, id(self))
 
-  
+
 class GPL(object):
   """A GEO Platform definition.
 
   Attributes:
     id: str of GEO id like GPL4133
     row_desc: {str: {str: str}} of row ids to dict of col_title=>value per row
+    probe_list: [str] of probe IDs in row order in the order loaded
+    probe_idx_map: {str:int} of probe ID to row index in self.probe_list (from zero)
     type: str in RECOGNIZED_STUDY_TYPES of platform type
     populated: bool if this GPL has metadata
     loaded: bool if this GPL has row descriptions
@@ -745,12 +748,14 @@ class GPL(object):
   """
   PTN_GPL = "http://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=%(id)s&targ=gpl&view=data&form=text"
   PTN_GPL_QUICK = "http://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=%(id)s&targ=self&view=quick&form=text"
+  PTN_GPL_FULL = "http://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GPL570&targ=gpl&view=full&form=text"
   RX_PLATFORM = re.compile("^\^PLATFORM = (\w+)")
   # matches key, value
   RX_HEADER = re.compile("^#([^=]+?) = ?(.*)")
   RX_ATTR = re.compile("^!Platform_([^=]+?) = ?(.*)")
   HEAD_END_LINE = "!platform_table_begin"
   TABLE_END_LINE = "!platform_table_end"
+  IGNORE_SAMPLE_IDS = True # set to False to load 'sample_id' attribute list from GPL file definition.
 
   # Use these keywords to find special columns and determine study type
   # {type: {col_name: [key_words]}}
@@ -807,6 +812,8 @@ class GPL(object):
     self.col_titles = []
     self.col_desc = {}
     self.row_desc = {}
+    self.probe_list = []
+    self.probe_idx_map = {}
     self.type = study_type
     self.special_cols = {}
     self.attrs = {}
@@ -818,6 +825,14 @@ class GPL(object):
 
     # Populate self with meta data
     self._populate()
+
+  @property
+  def url(self):
+    return self.PTN_GPL_FULL % {'id': self.id}
+  
+  @property
+  def brief_url(self):
+    return self.PTN_GPL_QUICK % {'id': self.id}
 
   def _check_id(self, line):
     """Raise error if platform id parsed from `line` does not match self.id."""
@@ -831,7 +846,7 @@ class GPL(object):
           "GPL ID %s differs from requested ID %s." % (platform_id, self.id)
   
   def _parse_brief(self, fp):
-    """Parse GEO QUICK SOFT report for this GPL.
+    """Parse GPL QUICK SOFT report.
 
     Args:
       fp: [*str] of open line iterator to quick view, text form GPL description
@@ -857,7 +872,9 @@ class GPL(object):
       m = self.RX_ATTR.match(line)
       if m:
         key, value = m.groups()
-        self.attrs.setdefault(key, []).append(value)
+        # Ignore attribute 'sample_id' because it may be very large and may be related to many different studies.
+        if not (key == 'sample_id' and self.IGNORE_SAMPLE_IDS):
+          self.attrs.setdefault(key, []).append(value)
         continue
 
       # Is this the end line? Exit loop.
@@ -883,14 +900,28 @@ class GPL(object):
     #TODO: include type
     return "[GPL %s (%d)]" % (self.id, id(self))
 
+  def _get_fp(self):
+    """Return file pointer to http connection for GPL data."""
+    url = self.PTN_GPL % {'id': self.id}
+    handle = Download(url)
+    http_fp = handle.read()
+    Log.info("Fetched %s while loading %s." % (url, self))
+    return http_fp
+
+  def _get_fp_brief(self):
+    """Return file pointer to http connection for GPL brief."""
+    url = self.PTN_GPL_QUICK % {'id': self.id}
+    handle = Download(url)
+    http_fp = handle.read()
+    Log.info("Fetched %s while loading %s." % (url, self))
+    return http_fp
+
   def _populate(self):
     """Populate self with meta data, but not row descriptions."""
 
     # 1. Open GEO and load description of this GPL
     # ==========
-    url = self.PTN_GPL_QUICK % {'id': self.id}
-    handle = Download(url)
-    http_fp = handle.read()
+    http_fp = self._get_fp_brief()
     self._parse_brief(http_fp)
     http_fp.close()
 
@@ -1038,8 +1069,6 @@ class GPL(object):
       value = None
     return value
 
-  #TODO: populate from 
-  
   def load(self):
     """Fetch GPL row definitions, load values into this object.
     """
@@ -1049,12 +1078,10 @@ class GPL(object):
       Log.warning("%s already loaded." % self)
       return
     
-    url = self.PTN_GPL % {'id': self.id}
-    handle = Download(url)
-    http_fp = handle.read()
+    http_fp = self._get_fp()
     self._parse(http_fp)
-    Log.info("Fetched %s while loading %s." % (url, self))
     http_fp.close()
+
     # Verify that at least one row description has been loaded.
     if len(self.row_desc) < 1:
       Log.warning("No row descriptions loaded for %s." % self)
@@ -1080,18 +1107,27 @@ class GPL(object):
           "GPL ID %s differs from requested ID %s." % (platform_id, self.id)
     
     # 1. Collect attributes and column titles.
+    n_row = 0
     for line in fp:
       line = line.strip()
       m = self.RX_HEADER.match(line)
       # Only handle header lines in this loop.
       if not m:
-        # This must be the end header line. 
-        if line != self.HEAD_END_LINE:
+        if line[0] == "!":
+          if line == self.HEAD_END_LINE:
+            break
+          else:
+            # This is a header line from a 'full' GPL definition file. Ignore it.
+            continue
+        else:
           raise MalformedDataError, \
-            "Unrecognized line '%s' while parsing %s" % (line, self.id)
-        break
+              "Unrecognized line '%s' while parsing %s" % (line, self.id)
       key, value = m.groups()
       self.col_desc[key] = value
+      # Add key to row list.
+      self.probe_list.append(key)
+      self.probe_idx_map[key] = n_row
+      n_row += 1
 
     # 2. Collect column titles from first row of data.
     line = fp.next()
@@ -1131,6 +1167,28 @@ class GPL(object):
     Log.info("Populated %s with %d row descriptions of %d columns." % \
              (self, len(self.row_desc), len(self.col_titles)))
     fp.close()
+
+  @classmethod
+  def fp_download_full(cls, gpl_id):
+    """Download full GPL definition."""
+    url = cls.PTN_GPL_FULL % {'id': gpl_id}
+    handle = Download(url)
+    return handle.read()
+
+  @classmethod
+  def fp_download_data(cls, gpl_id):
+    """Download full GPL definition."""
+    url = cls.PTN_GPL_FULL % {'id': gpl_id}
+    handle = Download(url)
+    return handle.read()
+
+  @classmethod
+  def fp_download_brief(cls, gpl_id):
+    """Download full GPL definition."""
+    url = cls.PTN_GPL_QUICK % {'id': gpl_id}
+    handle = Download(url)
+    return handle.read()
+
 
     
 class GSM(object):
@@ -1190,3 +1248,52 @@ class GSM(object):
         self.attr[k] = old_values
         self.attr.update(new_attrs)
       
+class LocalGPL(GPL):
+  """GPL object created from file.
+
+  Optionally handles fname_data in .tab format.
+  """
+  def __init__(self, fname_brief=None, fname_data=None, data_is_tab=False, *args, **kwds):
+    assert fname_brief and fname_data
+    self.fname_brief, self.fname_data, self.data_is_tab = fname_brief, fname_data, data_is_tab
+
+    # get GPL ID from first line of GPL brief
+    gpl_id = self.RX_PLATFORM.match(open(fname_brief).next()).group(1)
+    super(LocalGPL, self).__init__(gpl_id, *args, **kwds)
+
+  def _get_fp(self):
+    Log.info("Loaded %s from file while loading %s." % (self.fname_data, self))
+    if self.data_is_tab:
+      return FauxGPLFile(open(self.fname_data, "r"), gpl_id=self.id)
+    else:
+      return open(self.fname_data, "r")
+  
+  def _get_fp_brief(self):
+    Log.info("Loaded %s from file while loading %s." % (self.fname_brief, self))
+    return open(self.fname_brief, "r")
+
+                           
+
+class FauxGPLFile(object):
+  FIRST_LINE_PTN = "^PLATFORM = %s"
+  def __init__(self, fp, gpl_id):
+    self.n_line = 0
+    self.gpl_id = gpl_id
+    self.fp = fp
+  def __iter__(self):
+    return self
+  def next(self):
+    self. n_line += 1
+    if self.n_line == 1:
+      return self.FIRST_LINE_PTN % self.gpl_id
+    elif self.n_line == 2:
+      return GPL.HEAD_END_LINE+"\n"
+    elif self.n_line == 3:
+      line = self.fp.next()
+      assert line[0] == '#'
+      return line[1:]
+    else:
+      return self.fp.next()
+    
+  def close(self):
+    self.fp.close()
