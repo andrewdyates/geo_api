@@ -1255,9 +1255,10 @@ class LocalGPL(GPL):
   def _get_fp(self):
     Log.info("Loaded %s from file while loading %s." % (self.fname_data, self))
     if self.data_is_tab:
-      return FauxGPLFile(open(self.fname_data, "r"), gpl_id=self.id)
+      fp = FauxGPLFile(open(self.fname_data, "r"), gpl_id=self.id)
     else:
-      return open(self.fname_data, "r")
+      fp = open(self.fname_data, "r")
+    return fp
   
   def _get_fp_brief(self):
     Log.info("Loaded %s from file while loading %s." % (self.fname_brief, self))
