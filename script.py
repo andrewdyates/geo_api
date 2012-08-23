@@ -44,7 +44,7 @@ def report(msg, fp):
   print msg
 
 
-def main(gse_id, gpl_id=None, out_dir="", merge_cols=True, percentile=.75):
+def main(gse_id, gpl_id=None, out_dir="", merge_cols=False, percentile=.75):
   """Main script routine.
 
   Args:

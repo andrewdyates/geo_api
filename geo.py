@@ -731,6 +731,8 @@ class GPL(object):
   Attributes:
     id: str of GEO id like GPL4133
     row_desc: {str: {str: str}} of row ids to dict of col_title=>value per row
+    probe_list: [str] of probe IDs in row order in the order loaded
+    probe_idx_map: {str:int} of probe ID to row index in self.probe_list (from zero)
     type: str in RECOGNIZED_STUDY_TYPES of platform type
     populated: bool if this GPL has metadata
     loaded: bool if this GPL has row descriptions
@@ -810,6 +812,8 @@ class GPL(object):
     self.col_titles = []
     self.col_desc = {}
     self.row_desc = {}
+    self.probe_list = []
+    self.probe_idx_map = {}
     self.type = study_type
     self.special_cols = {}
     self.attrs = {}
@@ -1103,6 +1107,7 @@ class GPL(object):
           "GPL ID %s differs from requested ID %s." % (platform_id, self.id)
     
     # 1. Collect attributes and column titles.
+    n_row = 0
     for line in fp:
       line = line.strip()
       m = self.RX_HEADER.match(line)
@@ -1119,6 +1124,10 @@ class GPL(object):
               "Unrecognized line '%s' while parsing %s" % (line, self.id)
       key, value = m.groups()
       self.col_desc[key] = value
+      # Add key to row list.
+      self.probe_list.append(key)
+      self.probe_idx_map[key] = n_row
+      n_row += 1
 
     # 2. Collect column titles from first row of data.
     line = fp.next()
