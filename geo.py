@@ -1198,6 +1198,9 @@ class GPL(object):
 class GSM(object):
   """A GEO Sample definition.
 
+  Compound, nested sample attribute keys are joined by ':' in descending hierarchical order.
+  e.g., nested attribute "Characterics -> gender" becomes flat attribute "Characterics:gender"
+
   Attributes:
     id: GSM id like GSM23409
     populated: bool if self has values

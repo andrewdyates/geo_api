@@ -6,9 +6,9 @@ import gzip3 as gzip
 
 class Gzipper(gzip.GzipFile):
   """Wrapper for gzip which closes underlying streams when closed."""
-  def close(self, *args, **kwds):
+  def close(self):
     """Close underlying fileobj, then close self."""
     if self.fileobj:
       self.fileobj.close()
-    return super(Gzipper, self).close(*args, **kwds)
+    return super(Gzipper, self).close()
     
