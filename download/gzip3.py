@@ -520,6 +520,7 @@ class GzipFile(io.BufferedIOBase):
             count = offset - self.offset
             chunk = bytes(1024)
             for i in range(count // 1024):
+                assert i is not None # suppress pychecker warning
                 self.write(chunk)
             self.write(bytes(count % 1024))
         elif self.mode == READ:

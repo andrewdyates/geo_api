@@ -771,7 +771,12 @@ class GPL(object):
       'META': set(['SNP', 'nucleotide']),
       'SNP_ID': set(['snp', 'id', 'rs', 'snpid', 'ncbi']),
       'CHROMOSOME': set(['chromosome', 'chrom', 'chr', 'ch']),
-      'LOCATION': set(['mapinfo', 'map', 'info', 'loci', 'locus', 'loc', 'location', 'pos', 'position'])}
+      'LOCATION': set(['mapinfo', 'map', 'info', 'loci', 'locus', 'loc', 'location', 'pos', 'position'])},
+    'METHYLATION': {
+      'META': set(['humanmethylation', 'cpg', 'methylation']),
+      'GENE_SYMBOL': set(['gene', 'symbol', 'sym', 'genesym', 'genesymbol']),
+      'NAME': set(['name'])
+      }
     }
   # Preferred order of gene row identification symbol
   EQTL_GENE_NAME_LIST = [
@@ -1197,6 +1202,9 @@ class GPL(object):
     
 class GSM(object):
   """A GEO Sample definition.
+
+  Compound, nested sample attribute keys are joined by ':' in descending hierarchical order.
+  e.g., nested attribute "Characterics -> gender" becomes flat attribute "Characterics:gender"
 
   Attributes:
     id: GSM id like GSM23409
