@@ -290,11 +290,16 @@ class GSE(object):
     if self.pseudo:
       n = len(ftp_files)
       s = self.selected_platform_id.lower()
-      ftp_files = filter(lambda x: s in x.filename.lower(), ftp_files)
+      gpl_ftp_files = filter(lambda x: s in x.filename.lower(), ftp_files)
+      if len(gpl_ftp_files) == 0:
+        Log.warn("No FTP files found with platform ID in file name. Return all %d file names."%n)
+        gpl_ftp_files = ftp_files
       Log.info("Selected %d of %d ftp files by '%s' in filename for %s." % \
-         (len(ftp_files), n, s, self))
+         (len(gpl_ftp_files), n, s, self))
+    else:
+      gpl_ftp_files = ftp_files
     
-    return ftp_files
+    return gpl_ftp_files
     
   def __repr__(self):
     if not self.pseudo:
