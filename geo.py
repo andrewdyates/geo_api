@@ -667,7 +667,7 @@ class GSE(object):
       if line == self.HEAD_END_LINE:
         break
 
-      # Ignore !Sample headers. Collect !Sample headers.
+      # Collect !Sample headers.
       m = self.RX_SAMPLE_HEADER.match(line)
       if m:
         key, values = m.groups()

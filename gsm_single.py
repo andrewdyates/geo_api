@@ -1,16 +1,18 @@
 #!/usr/bin/python
 """Parse a GSM "full" SOFT text file downloaded from GEO.
 
-Ideally, this could be done using a dtype=np.character numpy array and the matrix_io module,
-but that's beyond what is warranted for the intention of this module.
+Includes sample data.
 """
 import re
 
-RX_TITLE = "^SAMPLE = (\w+)"
-RX_SAMPLE = re.compile("^!Sample_(\w+)\t(.+)$")
+RX_TITLE = re.compile("^\^SAMPLE = (\w+)")
+RX_SAMPLE = re.compile("^!Sample_(\w+) = (.+)$")
 RX_DESC = re.compile("^#([^=]+?) = ?(.*)")
 S_BEGIN = "!sample_table_begin"
 S_END = "!sample_table_end"
+
+# Create download URL to SOFT text "full" using URL_PTN % GSM_ID
+URL_PTN = "http://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=%s&targ=self&form=text&view=full"
 
 
 class GSM_Lite(object):
