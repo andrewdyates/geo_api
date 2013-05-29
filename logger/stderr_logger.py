@@ -26,7 +26,7 @@ Log.addHandler(ch)
 # Create file handler which logs even debug messages.
 # Use "debug" for big file dumps
 home_dir = os.environ["HOME"]
-fh = logging.FileHandler("%s/%s" % (home_dir, 'python_logger.log'))
+fh = logging.FileHandler("%s/%s" % (home_dir, '.python_logger.log'))
 fh.setLevel(logging.DEBUG)
 Log.addHandler(fh)
 
